@@ -2,7 +2,7 @@ const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: '
 const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
 const ORDERS_KEY = 'bakery-cost-calculator-orders-v3';
 const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v3';
-const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v4';
+const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v5';
 
 const demoInventory = [
   // Costco starter estimates — verify against local warehouse/receipt prices.
@@ -236,6 +236,7 @@ function addComponent(){ state.components.push({id:uid(), name:'New component', 
 function escapeHtml(v){ return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 
 document.addEventListener('input', e=>{
+  if (e.target.matches('[data-ingredient-picker]')) return;
   const compEl=e.target.closest('[data-component-id]');
   if(compEl){ const c=state.components.find(x=>x.id===compEl.dataset.componentId); if(!c)return;
     const ingRow=e.target.closest('[data-ingredient-id]'); const labRow=e.target.closest('[data-labor-id]');
@@ -250,6 +251,7 @@ document.addEventListener('input', e=>{
   if(e.target.id==='searchOrders') renderOrders();
 });
 document.addEventListener('change', e=>{
+  if (e.target.matches('[data-ingredient-picker]')) return;
   if (e.target.closest('[data-component-id]') || e.target.closest('[data-inventory-id]') || e.target.closest('#orderLaborBody [data-labor-id]')) {
     saveAll();
     renderAll();
