@@ -121,3 +121,6 @@ tr:last-child td { border-bottom: 0; }
 @media (max-width: 900px) {
   .component-head { grid-template-columns: 1fr; }
 }
+
+.ingredient-search { min-width: 260px; flex: 1; }
+@media (max-width: 900px) { .ingredient-search, .component-actions select { width: 100%; } }

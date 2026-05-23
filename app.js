@@ -1,8 +1,8 @@
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
 const ORDERS_KEY = 'bakery-cost-calculator-orders-v3';
-const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v4';
-const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v7';
+const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v5';
+const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v8';
 
 const demoInventory = [
   // Costco starter estimates — verify against local warehouse/receipt prices.
@@ -244,7 +244,15 @@ function renderRecipes() {
   $('recipesList').innerHTML = state.templates.map(t => `<article class="recipe-card"><div><h3>${escapeHtml(t.name)}</h3><div class="order-meta">${t.quantity} items · ${(t.components||[]).length} components</div></div><div class="recipe-card-actions"><button class="secondary small" data-load-template="${t.id}">Load</button><button class="danger" data-delete-template="${t.id}">Delete</button></div></article>`).join('') || '<p class="muted">No templates yet.</p>';
   renderTemplatePicker();
 }
-function renderInventoryPickerOptions() { return state.inventory.slice().sort((a,b)=>(a.store+a.name).localeCompare(b.store+b.name)).map(i => `<option value="${i.id}">${escapeHtml(i.store || 'Store')} · ${escapeHtml(i.name)} · ${currency.format(inventoryUnitCost(i))}/${escapeHtml(i.unit || 'unit')}</option>`).join(''); }
+function renderInventoryPickerOptions(query = '') {
+  const q = query.trim().toLowerCase();
+  const matches = state.inventory
+    .filter(i => !q || `${i.store} ${i.name} ${i.unit} ${i.source}`.toLowerCase().includes(q))
+    .slice()
+    .sort((a,b)=>(a.store+a.name).localeCompare(b.store+b.name));
+  if (!matches.length) return '<option value="">No matching ingredients</option>';
+  return matches.map(i => `<option value="${i.id}">${escapeHtml(i.store || 'Store')} · ${escapeHtml(i.name)} · ${currency.format(inventoryUnitCost(i))}/${escapeHtml(i.unit || 'unit')}</option>`).join('');
+}
 function renderComponents() {
   $('componentsList').innerHTML = state.components.map(c => {
     const scale = scaleFor(c);
@@ -263,7 +271,7 @@ function renderComponents() {
       ${c.componentType === 'cake' ? `<div class="grid four cake-yield-grid"><label>Cake shape<input data-component-field="cakeShape" value="${escapeHtml(c.cakeShape || 'round')}" placeholder="round, square, sheet..." /></label><label>Diameter / size<input data-component-field="cakeDiameter" type="number" min="0" step="0.5" value="${c.cakeDiameter || ''}" placeholder="8" /></label><label>Layers<input data-component-field="cakeLayers" type="number" min="1" step="1" value="${c.cakeLayers || ''}" placeholder="3" /></label><label>Yield example<input value="${escapeHtml(yieldLabel(c))}" readonly /></label></div>` : ''}
       <div class="component-meta"><span class="pill">Scale ${round2(scale)}x</span><span class="pill">Yield ${escapeHtml(yieldLabel(c))}</span><span class="pill">Ingredients ${currency.format(ingCost)}</span><span class="pill">Labor ${currency.format(labCost)}</span></div>
       <label>Source / recipe notes<input data-component-field="source" value="${escapeHtml(c.source || '')}" placeholder="URL, cookbook, or edits" /></label>
-      <div class="component-section-title"><h3>Ingredients</h3><div class="component-actions"><select data-ingredient-picker>${renderInventoryPickerOptions()}</select><button class="secondary small" data-add-component-ingredient="${c.id}">+ Use selected</button><button class="secondary small" data-add-custom-ingredient="${c.id}">+ Custom</button></div></div>
+      <div class="component-section-title"><h3>Ingredients</h3><div class="component-actions"><input class="ingredient-search" data-ingredient-search placeholder="Search inventory, e.g. flour, butter, Costco..." value="${escapeHtml(c.ingredientSearch || '')}" /><select data-ingredient-picker>${renderInventoryPickerOptions(c.ingredientSearch || '')}</select><button class="secondary small" data-add-component-ingredient="${c.id}">+ Use selected</button><button class="secondary small" data-add-custom-ingredient="${c.id}">+ Custom</button></div></div>
       <div class="table-wrap"><table><thead><tr><th>Ingredient</th><th>Store</th><th>Amount used</th><th>Unit</th><th>Package size</th><th>Package cost</th><th>Scaled cost</th><th></th></tr></thead><tbody>${c.ingredients.map(i => `<tr data-ingredient-id="${i.id}"><td><input data-ingredient-field="name" value="${escapeHtml(i.name)}" /></td><td><input data-ingredient-field="store" value="${escapeHtml(i.store||'')}" /></td><td><input data-ingredient-field="used" type="number" step="0.01" value="${i.used}" /></td><td><input data-ingredient-field="unit" value="${escapeHtml(i.unit||'')}" /></td><td><input data-ingredient-field="packageAmount" type="number" step="0.01" value="${i.packageAmount}" /></td><td><input data-ingredient-field="packageCost" type="number" step="0.01" value="${i.packageCost}" /></td><td><strong>${currency.format(ingredientCost(i, scale))}</strong></td><td><button class="danger" data-remove-component-ingredient="${c.id}:${i.id}">Remove</button></td></tr>`).join('')}</tbody></table></div>
       <div class="component-section-title"><h3>Labor</h3><button class="secondary small" data-add-component-labor="${c.id}">+ Add labor</button></div>
       <div class="table-wrap"><table><thead><tr><th>Task</th><th>Labor model</th><th>Minutes</th><th>Custom qty</th><th>Hourly rate</th><th>Cost</th><th></th></tr></thead><tbody>${laborRows(c.labor, c, 'component')}</tbody></table></div>
@@ -301,6 +309,12 @@ document.addEventListener('input', e=>{
   if (e.target.matches('[data-ingredient-picker]')) return;
   const compEl=e.target.closest('[data-component-id]');
   if(compEl){ const c=state.components.find(x=>x.id===compEl.dataset.componentId); if(!c)return;
+    if (e.target.matches('[data-ingredient-search]')) {
+      c.ingredientSearch = e.target.value;
+      const picker = e.target.parentElement.querySelector('[data-ingredient-picker]');
+      picker.innerHTML = renderInventoryPickerOptions(c.ingredientSearch);
+      return;
+    }
     const ingRow=e.target.closest('[data-ingredient-id]'); const labRow=e.target.closest('[data-labor-id]');
     if(e.target.dataset.componentField){ const f=e.target.dataset.componentField; c[f]=isNumericComponentField(f)?e.target.value:e.target.value; }
     else if(ingRow){ const i=c.ingredients.find(x=>x.id===ingRow.dataset.ingredientId); const f=e.target.dataset.ingredientField; i[f]=['name','store','unit'].includes(f)?e.target.value:e.target.value; }
@@ -323,7 +337,7 @@ document.addEventListener('click', e=>{
   if(e.target.dataset.loadTemplate) return loadTemplate(e.target.dataset.loadTemplate);
   if(e.target.dataset.deleteTemplate){ state.templates=state.templates.filter(t=>t.id!==e.target.dataset.deleteTemplate); saveAll(); return renderAll(); }
   if(e.target.dataset.removeComponent){ state.components=state.components.filter(c=>c.id!==e.target.dataset.removeComponent); return renderAll(); }
-  if(e.target.dataset.addComponentIngredient){ const c=state.components.find(x=>x.id===e.target.dataset.addComponentIngredient); const picker=e.target.parentElement.querySelector('[data-ingredient-picker]'); const inv=findInv(picker.value); if(c&&inv)c.ingredients.push(ingredientFromLine({inventoryId:inv.id, used:0})); return renderAll(); }
+  if(e.target.dataset.addComponentIngredient){ const c=state.components.find(x=>x.id===e.target.dataset.addComponentIngredient); const picker=e.target.parentElement.querySelector('[data-ingredient-picker]'); const inv=findInv(picker.value); if(!inv) return; if(c&&inv)c.ingredients.push(ingredientFromLine({inventoryId:inv.id, used:0})); return renderAll(); }
   if(e.target.dataset.addCustomIngredient){ const c=state.components.find(x=>x.id===e.target.dataset.addCustomIngredient); c.ingredients.push({id:uid(), name:'Custom ingredient', store:'', used:0, unit:'g', packageAmount:1, packageCost:0}); return renderAll(); }
   if(e.target.dataset.removeComponentIngredient){ const [cid,iid]=e.target.dataset.removeComponentIngredient.split(':'); const c=state.components.find(x=>x.id===cid); c.ingredients=c.ingredients.filter(i=>i.id!==iid); return renderAll(); }
   if(e.target.dataset.addComponentLabor){ const c=state.components.find(x=>x.id===e.target.dataset.addComponentLabor); c.labor.push({id:uid(), task:'New labor', type:'fixed', minutes:10, qtyBasis:1, hourlyRate:18}); return renderAll(); }
