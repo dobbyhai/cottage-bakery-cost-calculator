@@ -2,7 +2,7 @@ const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: '
 const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
 const ORDERS_KEY = 'bakery-cost-calculator-orders-v3';
 const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v3';
-const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v5';
+const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v6';
 
 const demoInventory = [
   // Costco starter estimates — verify against local warehouse/receipt prices.
@@ -207,13 +207,16 @@ function renderComponents() {
       <div class="component-section-title"><h3>Ingredients</h3><div class="component-actions"><select data-ingredient-picker>${renderInventoryPickerOptions()}</select><button class="secondary small" data-add-component-ingredient="${c.id}">+ Use selected</button><button class="secondary small" data-add-custom-ingredient="${c.id}">+ Custom</button></div></div>
       <div class="table-wrap"><table><thead><tr><th>Ingredient</th><th>Store</th><th>Amount used</th><th>Unit</th><th>Package size</th><th>Package cost</th><th>Scaled cost</th><th></th></tr></thead><tbody>${c.ingredients.map(i => `<tr data-ingredient-id="${i.id}"><td><input data-ingredient-field="name" value="${escapeHtml(i.name)}" /></td><td><input data-ingredient-field="store" value="${escapeHtml(i.store||'')}" /></td><td><input data-ingredient-field="used" type="number" step="0.01" value="${i.used}" /></td><td><input data-ingredient-field="unit" value="${escapeHtml(i.unit||'')}" /></td><td><input data-ingredient-field="packageAmount" type="number" step="0.01" value="${i.packageAmount}" /></td><td><input data-ingredient-field="packageCost" type="number" step="0.01" value="${i.packageCost}" /></td><td><strong>${currency.format(ingredientCost(i, scale))}</strong></td><td><button class="danger" data-remove-component-ingredient="${c.id}:${i.id}">Remove</button></td></tr>`).join('')}</tbody></table></div>
       <div class="component-section-title"><h3>Labor</h3><button class="secondary small" data-add-component-labor="${c.id}">+ Add labor</button></div>
-      <div class="table-wrap"><table><thead><tr><th>Task</th><th>Type</th><th>Minutes / basis</th><th>Qty basis</th><th>Hourly rate</th><th>Cost</th><th></th></tr></thead><tbody>${laborRows(c.labor, c, 'component')}</tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>Task</th><th>Labor model</th><th>Minutes</th><th>Custom qty</th><th>Hourly rate</th><th>Cost</th><th></th></tr></thead><tbody>${laborRows(c.labor, c, 'component')}</tbody></table></div>
     </article>`;
   }).join('');
 }
+function laborTypeHint(type) {
+  return { fixed: 'Once only', perItem: 'Minutes × items needed', perBatch: 'Minutes × recipe scale', perUnit: 'Minutes × custom qty × scale' }[type] || '';
+}
 function laborRows(lines, component, scope) {
   const scale = component ? scaleFor(component) : 1;
-  return lines.map(l => `<tr data-labor-id="${l.id}"><td><input data-labor-field="task" value="${escapeHtml(l.task)}" /></td><td><select data-labor-field="type"><option value="fixed" ${l.type==='fixed'?'selected':''}>Fixed</option><option value="perItem" ${l.type==='perItem'?'selected':''}>Per item</option><option value="perBatch" ${l.type==='perBatch'?'selected':''}>Per batch</option><option value="perUnit" ${l.type==='perUnit'?'selected':''}>Per unit</option></select></td><td><input data-labor-field="minutes" type="number" step="0.1" value="${l.minutes}" /></td><td><input data-labor-field="qtyBasis" type="number" step="0.01" value="${l.qtyBasis||1}" /></td><td><input data-labor-field="hourlyRate" type="number" step="0.01" value="${l.hourlyRate}" /></td><td><strong>${currency.format(laborCost(l, scale, component))}</strong></td><td><button class="danger" data-remove-labor="${scope}:${component?.id||'order'}:${l.id}">Remove</button></td></tr>`).join('');
+  return lines.map(l => `<tr data-labor-id="${l.id}"><td><input data-labor-field="task" value="${escapeHtml(l.task)}" /></td><td><select data-labor-field="type"><option value="fixed" ${l.type==='fixed'?'selected':''}>Fixed / one-time</option><option value="perItem" ${l.type==='perItem'?'selected':''}>Per item</option><option value="perBatch" ${l.type==='perBatch'?'selected':''}>Per recipe batch</option><option value="perUnit" ${l.type==='perUnit'?'selected':''}>Custom quantity</option></select></td><td><input data-labor-field="minutes" type="number" step="0.1" value="${l.minutes}" /></td><td><input data-labor-field="qtyBasis" type="number" step="0.01" value="${l.qtyBasis||1}" /></td><td><input data-labor-field="hourlyRate" type="number" step="0.01" value="${l.hourlyRate}" /></td><td><strong>${currency.format(laborCost(l, scale, component))}</strong><div class="muted">${escapeHtml(laborTypeHint(l.type))}</div></td><td><button class="danger" data-remove-labor="${scope}:${component?.id||'order'}:${l.id}">Remove</button></td></tr>`).join('');
 }
 function renderOrderLabor() { $('orderLaborBody').innerHTML = laborRows(state.orderLabor, null, 'order'); }
 function renderInventory() {
