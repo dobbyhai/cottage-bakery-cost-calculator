@@ -1,0 +1,17 @@
+{
+  "name": "cottage-bakery-cost-calculator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A component-based cottage bakery cost calculator for ingredients, labor, extras, utilities, and order profitability.",
+  "scripts": {
+    "start": "python3 -m http.server 4178 --bind 0.0.0.0",
+    "check": "node --check app.js",
+    "build": "mkdir -p dist && cp index.html styles.css app.js dist/"
+  },
+  "keywords": [
+    "bakery",
+    "cost-calculator",
+    "cottage-bakery"
+  ],
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bakery Cost Calculator</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Cottage Bakery Cost Tool</p>
+      <h1>Bakery Cost Calculator</h1>
+      <p class="subtitle">Calculate ingredient cost, labor cost, profit margin, and save real order history from a reusable ingredient inventory.</p>
+    </div>
+    <div class="header-actions">
+      <button id="exportCsvBtn" class="secondary">Export Orders CSV</button>
+      <button id="resetDemoBtn" class="ghost">Reset Demo Data</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel calculator-panel">
+      <div class="section-title">
+        <div>
+          <h2>New Order</h2>
+          <p class="helper">Build an order from scaled components: cake base, frosting, filling, garnish, and more.</p>
+        </div>
+        <span id="saveStatus" class="muted"></span>
+      </div>
+
+      <div class="template-bar">
+        <label>Start from order template
+          <select id="recipePicker" aria-label="Pick recipe template"></select>
+        </label>
+        <button id="loadRecipeBtn" class="secondary small">Load template</button>
+        <button id="saveRecipeBtn" class="secondary small">Save current as template</button>
+      </div>
+
+      <div class="grid two">
+        <label>Order name
+          <input id="orderName" placeholder="e.g., 24 chocolate cupcakes" />
+        </label>
+        <label>Customer / event
+          <input id="customerName" placeholder="e.g., Farmers market preorder" />
+        </label>
+        <label>Quantity sold
+          <input id="quantity" type="number" min="1" value="24" />
+        </label>
+        <label>Price charged ($)
+          <input id="priceCharged" type="number" min="0" step="0.01" value="72" />
+        </label>
+      </div>
+
+      <div class="subsection-header">
+        <div>
+          <h3>Components</h3>
+          <p class="helper">Each component has its own yield and scale. Example: cupcake base yields 12 cupcakes, order needs 24, so scale = 2x.</p>
+        </div>
+        <button id="addComponentBtn" class="secondary small">+ Add component</button>
+      </div>
+      <div id="componentsList" class="components-list"></div>
+
+      <div class="subsection-header">
+        <h3>Order-level labor</h3>
+        <button id="addOrderLaborBtn" class="secondary small">+ Add labor</button>
+      </div>
+      <p class="helper">Use this for shopping, client communication, setup, cleanup, or packaging that applies to the whole order.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Type</th>
+              <th>Minutes / basis</th>
+              <th>Qty basis</th>
+              <th>Hourly rate</th>
+              <th>Cost</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="orderLaborBody"></tbody>
+        </table>
+      </div>
+
+      <div class="subsection-header">
+        <h3>Extras</h3>
+        <p class="helper">Track packaging, delivery, platform fees, and other order-specific costs.</p>
+      </div>
+      <div class="grid four extras-grid">
+        <label>Packaging ($)
+          <input id="packagingCost" type="number" min="0" step="0.01" value="2.50" />
+        </label>
+        <label>Delivery / mileage ($)
+          <input id="deliveryCost" type="number" min="0" step="0.01" value="0" />
+        </label>
+        <label>Platform / payment fee ($)
+          <input id="feeCost" type="number" min="0" step="0.01" value="0" />
+        </label>
+        <label>Other supplies ($)
+          <input id="otherCost" type="number" min="0" step="0.01" value="0" />
+        </label>
+      </div>
+
+      <div class="subsection-header">
+        <h3>Utilities & overhead</h3>
+        <p class="helper">Estimate electricity/gas, oven time, water, dishwasher, and general kitchen overhead.</p>
+      </div>
+      <div class="grid four extras-grid">
+        <label>Kitchen overhead $/hr
+          <input id="kitchenRate" type="number" min="0" step="0.01" value="2.50" />
+        </label>
+        <label>Kitchen hours
+          <input id="kitchenHours" type="number" min="0" step="0.1" value="3" />
+        </label>
+        <label>Oven cost $/hr
+          <input id="ovenRate" type="number" min="0" step="0.01" value="1.20" />
+        </label>
+        <label>Oven minutes
+          <input id="ovenMinutes" type="number" min="0" step="1" value="45" />
+        </label>
+      </div>
+      <div class="grid two">
+        <label>Fixed order overhead ($)
+          <input id="fixedOverhead" type="number" min="0" step="0.01" value="1.50" />
+        </label>
+        <label>Notes
+          <textarea id="notes" rows="2" placeholder="Source recipe edits, client requests, lessons learned..."></textarea>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="saveOrderBtn">Save Order</button>
+        <button id="clearFormBtn" class="secondary">Clear Form</button>
+      </div>
+    </section>
+
+    <aside class="panel summary-panel">
+      <h2>Cost Summary</h2>
+      <div class="summary-card primary">
+        <span>Total cost</span>
+        <strong id="totalCost">$0.00</strong>
+      </div>
+      <div class="summary-grid">
+        <div><span>Ingredients</span><strong id="ingredientCost">$0.00</strong></div>
+        <div><span>Labor</span><strong id="laborCost">$0.00</strong></div>
+        <div><span>Extras</span><strong id="extrasCost">$0.00</strong></div>
+        <div><span>Utilities</span><strong id="utilitiesCost">$0.00</strong></div>
+        <div><span>Cost / item</span><strong id="costPerItem">$0.00</strong></div>
+        <div><span>Profit</span><strong id="profit">$0.00</strong></div>
+        <div><span>Margin</span><strong id="margin">0%</strong></div>
+        <div><span>Suggested price @ 50% margin</span><strong id="suggestedPrice">$0.00</strong></div>
+      </div>
+      <div id="pricingAdvice" class="advice"></div>
+    </aside>
+  </main>
+
+  <section class="panel recipes-panel">
+    <div class="section-title">
+      <div>
+        <h2>Recipe Templates</h2>
+        <p class="helper">Save common products once, then load them into new orders.</p>
+      </div>
+      <button id="addBlankRecipeBtn" class="secondary">+ Blank recipe</button>
+    </div>
+    <div id="recipesList" class="recipes-list"></div>
+  </section>
+
+  <section class="panel inventory-panel">
+    <div class="section-title">
+      <div>
+        <h2>Ingredient Inventory</h2>
+        <p class="helper">Save common package costs once. Prices are editable; receipt-verified costs should win over online estimates.</p>
+      </div>
+      <button id="addInventoryBtn" class="secondary">+ Add inventory item</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Store</th>
+            <th>Ingredient</th>
+            <th>Package amount</th>
+            <th>Unit</th>
+            <th>Package cost</th>
+            <th>Cost per unit</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="inventoryBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel history-panel">
+    <div class="section-title">
+      <h2>Saved Orders</h2>
+      <input id="searchOrders" placeholder="Search orders..." />
+    </div>
+    <div id="ordersList" class="orders-list"></div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
