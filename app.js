@@ -1,8 +1,8 @@
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
 const ORDERS_KEY = 'bakery-cost-calculator-orders-v3';
-const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v3';
-const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v6';
+const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v4';
+const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v7';
 
 const demoInventory = [
   // Costco starter estimates — verify against local warehouse/receipt prices.
@@ -36,6 +36,65 @@ const demoInventory = [
   { id: 'sprouts-cocoa', store: 'Sprouts', name: 'Cocoa powder', packageAmount: 226, unit: 'g', packageCost: 5.49, source: 'Sprouts online/local estimate' },
   { id: 'sprouts-chocolate-chips', store: 'Sprouts', name: 'Semi-sweet chocolate chips', packageAmount: 340, unit: 'g', packageCost: 4.99, source: 'Sprouts online/local estimate' },
   { id: 'sprouts-baking-chocolate', store: 'Sprouts', name: 'Baking chocolate bar', packageAmount: 113, unit: 'g', packageCost: 3.49, source: 'Sprouts online/local estimate' },
+
+  // Dairy, fruit, leaveners, and other common cottage bakery staples.
+  { id: 'costco-milk', store: 'Costco', name: 'Whole milk', packageAmount: 3785, unit: 'ml', packageCost: 4.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-milk', store: "Trader Joe's", name: 'Whole milk', packageAmount: 1893, unit: 'ml', packageCost: 3.79, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-milk', store: 'Sprouts', name: 'Whole milk', packageAmount: 1893, unit: 'ml', packageCost: 4.49, source: 'Sprouts local estimate' },
+  { id: 'costco-heavy-cream', store: 'Costco', name: 'Heavy whipping cream', packageAmount: 1893, unit: 'ml', packageCost: 8.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-heavy-cream', store: "Trader Joe's", name: 'Heavy whipping cream', packageAmount: 473, unit: 'ml', packageCost: 4.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-heavy-cream', store: 'Sprouts', name: 'Heavy whipping cream', packageAmount: 473, unit: 'ml', packageCost: 5.49, source: 'Sprouts local estimate' },
+  { id: 'costco-cream-cheese', store: 'Costco', name: 'Cream cheese', packageAmount: 1361, unit: 'g', packageCost: 9.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-cream-cheese', store: "Trader Joe's", name: 'Cream cheese', packageAmount: 227, unit: 'g', packageCost: 2.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-cream-cheese', store: 'Sprouts', name: 'Cream cheese', packageAmount: 227, unit: 'g', packageCost: 3.49, source: 'Sprouts local estimate' },
+  { id: 'tj-mascarpone', store: "Trader Joe's", name: 'Mascarpone cheese', packageAmount: 227, unit: 'g', packageCost: 4.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-mascarpone', store: 'Sprouts', name: 'Mascarpone cheese', packageAmount: 227, unit: 'g', packageCost: 6.99, source: 'Sprouts local estimate' },
+  { id: 'costco-greek-yogurt', store: 'Costco', name: 'Greek yogurt', packageAmount: 1360, unit: 'g', packageCost: 6.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-greek-yogurt', store: "Trader Joe's", name: 'Greek yogurt', packageAmount: 907, unit: 'g', packageCost: 5.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-greek-yogurt', store: 'Sprouts', name: 'Greek yogurt', packageAmount: 907, unit: 'g', packageCost: 6.49, source: 'Sprouts local estimate' },
+  { id: 'tj-kefir', store: "Trader Joe's", name: 'Kefir', packageAmount: 946, unit: 'ml', packageCost: 3.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-kefir', store: 'Sprouts', name: 'Kefir', packageAmount: 946, unit: 'ml', packageCost: 5.49, source: 'Sprouts local estimate' },
+  { id: 'costco-canola-oil', store: 'Costco', name: 'Canola oil', packageAmount: 4730, unit: 'ml', packageCost: 12.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-canola-oil', store: "Trader Joe's", name: 'Canola oil', packageAmount: 946, unit: 'ml', packageCost: 4.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-canola-oil', store: 'Sprouts', name: 'Canola oil', packageAmount: 1420, unit: 'ml', packageCost: 7.99, source: 'Sprouts local estimate' },
+  { id: 'costco-salt', store: 'Costco', name: 'Fine sea salt', packageAmount: 850, unit: 'g', packageCost: 4.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-salt', store: "Trader Joe's", name: 'Sea salt', packageAmount: 737, unit: 'g', packageCost: 1.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-salt', store: 'Sprouts', name: 'Fine sea salt', packageAmount: 737, unit: 'g', packageCost: 3.49, source: 'Sprouts local estimate' },
+  { id: 'tj-baking-powder', store: "Trader Joe's", name: 'Baking powder', packageAmount: 227, unit: 'g', packageCost: 1.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-baking-powder', store: 'Sprouts', name: 'Baking powder', packageAmount: 227, unit: 'g', packageCost: 3.49, source: 'Sprouts local estimate' },
+  { id: 'tj-baking-soda', store: "Trader Joe's", name: 'Baking soda', packageAmount: 454, unit: 'g', packageCost: 0.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-baking-soda', store: 'Sprouts', name: 'Baking soda', packageAmount: 454, unit: 'g', packageCost: 1.49, source: 'Sprouts local estimate' },
+  { id: 'tj-freeze-dried-strawberry-powder', store: "Trader Joe's", name: 'Freeze-dried strawberry powder', packageAmount: 34, unit: 'g', packageCost: 3.99, source: 'Estimate from freeze-dried strawberries; grind to powder' },
+  { id: 'sprouts-freeze-dried-strawberry-powder', store: 'Sprouts', name: 'Freeze-dried strawberry powder', packageAmount: 34, unit: 'g', packageCost: 5.99, source: 'Sprouts local estimate' },
+  { id: 'costco-fresh-strawberries', store: 'Costco', name: 'Fresh strawberries', packageAmount: 907, unit: 'g', packageCost: 5.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-fresh-strawberries', store: "Trader Joe's", name: 'Fresh strawberries', packageAmount: 454, unit: 'g', packageCost: 4.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-fresh-strawberries', store: 'Sprouts', name: 'Fresh strawberries', packageAmount: 454, unit: 'g', packageCost: 4.99, source: 'Sprouts local estimate' },
+  { id: 'costco-fresh-blueberries', store: 'Costco', name: 'Fresh blueberries', packageAmount: 510, unit: 'g', packageCost: 6.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-fresh-blueberries', store: "Trader Joe's", name: 'Fresh blueberries', packageAmount: 312, unit: 'g', packageCost: 4.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-fresh-blueberries', store: 'Sprouts', name: 'Fresh blueberries', packageAmount: 312, unit: 'g', packageCost: 4.99, source: 'Sprouts local estimate' },
+  { id: 'costco-fresh-blackberries', store: 'Costco', name: 'Fresh blackberries', packageAmount: 340, unit: 'g', packageCost: 5.99, source: 'Costco warehouse estimate' },
+  { id: 'tj-fresh-blackberries', store: "Trader Joe's", name: 'Fresh blackberries', packageAmount: 170, unit: 'g', packageCost: 3.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-fresh-blackberries', store: 'Sprouts', name: 'Fresh blackberries', packageAmount: 170, unit: 'g', packageCost: 4.49, source: 'Sprouts local estimate' },
+  { id: 'tj-strawberry-jam', store: "Trader Joe's", name: 'Strawberry jam', packageAmount: 510, unit: 'g', packageCost: 4.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-strawberry-jam', store: 'Sprouts', name: 'Strawberry jam', packageAmount: 510, unit: 'g', packageCost: 5.99, source: 'Sprouts local estimate' },
+
+  // Suggested additional staples often used in cakes, fillings, frostings, and decoration.
+  { id: 'tj-brown-sugar', store: "Trader Joe's", name: 'Brown sugar', packageAmount: 680, unit: 'g', packageCost: 3.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-brown-sugar', store: 'Sprouts', name: 'Brown sugar', packageAmount: 907, unit: 'g', packageCost: 3.99, source: 'Sprouts local estimate' },
+  { id: 'tj-cornstarch', store: "Trader Joe's", name: 'Cornstarch', packageAmount: 454, unit: 'g', packageCost: 2.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-cornstarch', store: 'Sprouts', name: 'Cornstarch', packageAmount: 454, unit: 'g', packageCost: 3.49, source: 'Sprouts local estimate' },
+  { id: 'tj-lemon', store: "Trader Joe's", name: 'Fresh lemons', packageAmount: 6, unit: 'each', packageCost: 2.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-lemon', store: 'Sprouts', name: 'Fresh lemons', packageAmount: 1, unit: 'each', packageCost: 0.79, source: 'Sprouts local estimate' },
+  { id: 'tj-sour-cream', store: "Trader Joe's", name: 'Sour cream', packageAmount: 454, unit: 'g', packageCost: 2.79, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-sour-cream', store: 'Sprouts', name: 'Sour cream', packageAmount: 454, unit: 'g', packageCost: 3.99, source: 'Sprouts local estimate' },
+  { id: 'tj-buttermilk', store: "Trader Joe's", name: 'Buttermilk', packageAmount: 946, unit: 'ml', packageCost: 3.49, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-buttermilk', store: 'Sprouts', name: 'Buttermilk', packageAmount: 946, unit: 'ml', packageCost: 4.49, source: 'Sprouts local estimate' },
+  { id: 'tj-cake-flour', store: "Trader Joe's", name: 'Cake flour', packageAmount: 907, unit: 'g', packageCost: 4.99, source: 'Placeholder estimate; verify availability' },
+  { id: 'sprouts-cake-flour', store: 'Sprouts', name: 'Cake flour', packageAmount: 907, unit: 'g', packageCost: 5.99, source: 'Sprouts local estimate' },
+  { id: 'tj-almond-flour', store: "Trader Joe's", name: 'Almond flour / meal', packageAmount: 454, unit: 'g', packageCost: 5.99, source: 'Trader Joe’s local estimate' },
+  { id: 'sprouts-almond-flour', store: 'Sprouts', name: 'Almond flour', packageAmount: 454, unit: 'g', packageCost: 8.99, source: 'Sprouts local estimate' },
+  { id: 'tj-sprinkles', store: "Trader Joe's", name: 'Sprinkles', packageAmount: 90, unit: 'g', packageCost: 1.99, source: 'Trader Joe’s seasonal/local estimate' },
+  { id: 'sprouts-food-coloring', store: 'Sprouts', name: 'Food coloring', packageAmount: 30, unit: 'ml', packageCost: 5.99, source: 'Sprouts local estimate' },
 ];
 
 const demoTemplates = [
