@@ -2,7 +2,7 @@ const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: '
 const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 1 });
 const ORDERS_KEY = 'bakery-cost-calculator-orders-v3';
 const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v3';
-const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v3';
+const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v4';
 
 const demoInventory = [
   // Costco starter estimates — verify against local warehouse/receipt prices.
@@ -46,7 +46,7 @@ const demoTemplates = [
     targetPrice: 72,
     components: [
       {
-        id: 'base', name: 'Chocolate cupcake base', needed: 24, yieldQty: 12, yieldUnit: 'cupcakes', rounding: 'partial', source: 'Starter component template',
+        id: 'base', name: 'Chocolate cupcake base', componentType: 'cupcake', needed: 24, yieldQty: 12, yieldUnit: 'cupcakes', rounding: 'partial', source: 'Starter component template',
         ingredients: [
           { inventoryId: 'costco-flour', used: 350 }, { inventoryId: 'costco-sugar', used: 250 },
           { inventoryId: 'costco-butter', used: 170 }, { inventoryId: 'costco-eggs', used: 2 },
@@ -59,7 +59,7 @@ const demoTemplates = [
         ]
       },
       {
-        id: 'frosting', name: 'Chocolate buttercream frosting', needed: 24, yieldQty: 12, yieldUnit: 'cupcakes covered', rounding: 'partial', source: 'Starter component template',
+        id: 'frosting', name: 'Chocolate buttercream frosting', componentType: 'frosting', needed: 24, yieldQty: 12, yieldUnit: 'cupcakes covered', rounding: 'partial', source: 'Starter component template',
         ingredients: [
           { inventoryId: 'costco-butter', used: 226 }, { inventoryId: 'costco-powdered-sugar', used: 450 },
           { inventoryId: 'costco-cocoa', used: 55 }, { inventoryId: 'costco-vanilla', used: 5 },
@@ -73,6 +73,40 @@ const demoTemplates = [
     orderLabor: [{ id: 'ol1', task: 'Packaging + cleanup', type: 'fixed', minutes: 30, qtyBasis: 1, hourlyRate: 18 }],
     extras: { packaging: 2.5, delivery: 0, fee: 0, other: 0 },
     utilities: { kitchenRate: 2.5, kitchenHours: 3, ovenRate: 1.2, ovenMinutes: 45, fixedOverhead: 1.5 },
+  },
+  {
+    id: 'eight-inch-chocolate-layer-cake',
+    name: '8-inch chocolate layer cake with buttercream',
+    quantity: 1,
+    targetPrice: 95,
+    components: [
+      {
+        id: 'cake-base', name: 'Chocolate cake base', componentType: 'cake', needed: 1, yieldQty: 1, yieldUnit: 'cake', cakeShape: 'round', cakeDiameter: 8, cakeLayers: 3, rounding: 'whole', source: 'Starter cake component template',
+        ingredients: [
+          { inventoryId: 'costco-flour', used: 420 }, { inventoryId: 'costco-sugar', used: 500 },
+          { inventoryId: 'costco-butter', used: 226 }, { inventoryId: 'costco-eggs', used: 4 },
+          { inventoryId: 'costco-cocoa', used: 90 }, { inventoryId: 'costco-vanilla', used: 10 },
+        ],
+        labor: [
+          { id: 'cl1', task: 'Mix batter', type: 'fixed', minutes: 30, qtyBasis: 1, hourlyRate: 18 },
+          { id: 'cl2', task: 'Bake cake layers', type: 'perBatch', minutes: 45, qtyBasis: 1, hourlyRate: 18 },
+        ]
+      },
+      {
+        id: 'buttercream', name: 'Chocolate buttercream', componentType: 'frosting', needed: 1, yieldQty: 1, yieldUnit: '8-inch 3-layer cake covered', rounding: 'partial', source: 'Starter frosting component template',
+        ingredients: [
+          { inventoryId: 'costco-butter', used: 454 }, { inventoryId: 'costco-powdered-sugar', used: 900 },
+          { inventoryId: 'costco-cocoa', used: 80 }, { inventoryId: 'costco-vanilla', used: 10 },
+        ],
+        labor: [
+          { id: 'cl3', task: 'Make buttercream', type: 'fixed', minutes: 25, qtyBasis: 1, hourlyRate: 18 },
+          { id: 'cl4', task: 'Fill, crumb coat, frost', type: 'fixed', minutes: 75, qtyBasis: 1, hourlyRate: 18 },
+        ]
+      },
+    ],
+    orderLabor: [{ id: 'ol2', task: 'Client comms + packaging + cleanup', type: 'fixed', minutes: 45, qtyBasis: 1, hourlyRate: 18 }],
+    extras: { packaging: 6, delivery: 0, fee: 0, other: 0 },
+    utilities: { kitchenRate: 2.5, kitchenHours: 4, ovenRate: 1.2, ovenMinutes: 45, fixedOverhead: 2 },
   },
 ];
 
@@ -94,6 +128,18 @@ function inventoryUnitCost(item) { return number(item?.packageAmount) > 0 ? numb
 function scaleFor(component) {
   const raw = number(component.yieldQty) > 0 ? number(component.needed) / number(component.yieldQty) : 1;
   return component.rounding === 'whole' ? Math.ceil(raw) : raw;
+}
+function yieldLabel(component) {
+  if (component.componentType === 'cake') {
+    const layers = component.cakeLayers ? `${component.cakeLayers}-layer` : '';
+    const diameter = component.cakeDiameter ? `${component.cakeDiameter}-inch` : '';
+    const shape = component.cakeShape || 'cake';
+    return `${component.yieldQty || 1} × ${[layers, diameter, shape].filter(Boolean).join(' ')}`;
+  }
+  return `${component.yieldQty || 0} ${component.yieldUnit || 'units'}`;
+}
+function isNumericComponentField(field) {
+  return ['needed', 'yieldQty', 'cakeDiameter', 'cakeLayers'].includes(field);
 }
 function ingredientFromLine(line) {
   const inv = findInv(line.inventoryId);
@@ -148,13 +194,15 @@ function renderComponents() {
     return `<article class="component-card" data-component-id="${c.id}">
       <div class="component-head">
         <label>Component name<input data-component-field="name" value="${escapeHtml(c.name)}" /></label>
+        <label>Type<select data-component-field="componentType"><option value="cupcake" ${c.componentType==='cupcake'?'selected':''}>Cupcakes/items</option><option value="cake" ${c.componentType==='cake'?'selected':''}>Cake base</option><option value="frosting" ${c.componentType==='frosting'?'selected':''}>Frosting</option><option value="filling" ${c.componentType==='filling'?'selected':''}>Filling</option><option value="garnish" ${c.componentType==='garnish'?'selected':''}>Garnish</option><option value="other" ${!['cupcake','cake','frosting','filling','garnish'].includes(c.componentType)?'selected':''}>Other</option></select></label>
         <label>Needed<input data-component-field="needed" type="number" min="0" step="0.01" value="${c.needed}" /></label>
-        <label>Recipe yield<input data-component-field="yieldQty" type="number" min="0" step="0.01" value="${c.yieldQty}" /></label>
-        <label>Yield unit<input data-component-field="yieldUnit" value="${escapeHtml(c.yieldUnit || '')}" /></label>
+        <label>${c.componentType==='cake'?'Cakes yielded':'Recipe yield'}<input data-component-field="yieldQty" type="number" min="0" step="0.01" value="${c.yieldQty}" /></label>
+        <label>${c.componentType==='cake'?'Yield note':'Yield unit'}<input data-component-field="yieldUnit" value="${escapeHtml(c.yieldUnit || '')}" placeholder="items, cupcakes covered, grams..." /></label>
         <label>Rounding<select data-component-field="rounding"><option value="partial" ${c.rounding!=='whole'?'selected':''}>Allow partial</option><option value="whole" ${c.rounding==='whole'?'selected':''}>Round up batches</option></select></label>
         <button class="danger" data-remove-component="${c.id}">Remove</button>
       </div>
-      <div class="component-meta"><span class="pill">Scale ${round2(scale)}x</span><span class="pill">Ingredients ${currency.format(ingCost)}</span><span class="pill">Labor ${currency.format(labCost)}</span></div>
+      ${c.componentType === 'cake' ? `<div class="grid four cake-yield-grid"><label>Cake shape<input data-component-field="cakeShape" value="${escapeHtml(c.cakeShape || 'round')}" placeholder="round, square, sheet..." /></label><label>Diameter / size<input data-component-field="cakeDiameter" type="number" min="0" step="0.5" value="${c.cakeDiameter || ''}" placeholder="8" /></label><label>Layers<input data-component-field="cakeLayers" type="number" min="1" step="1" value="${c.cakeLayers || ''}" placeholder="3" /></label><label>Yield example<input value="${escapeHtml(yieldLabel(c))}" readonly /></label></div>` : ''}
+      <div class="component-meta"><span class="pill">Scale ${round2(scale)}x</span><span class="pill">Yield ${escapeHtml(yieldLabel(c))}</span><span class="pill">Ingredients ${currency.format(ingCost)}</span><span class="pill">Labor ${currency.format(labCost)}</span></div>
       <label>Source / recipe notes<input data-component-field="source" value="${escapeHtml(c.source || '')}" placeholder="URL, cookbook, or edits" /></label>
       <div class="component-section-title"><h3>Ingredients</h3><div class="component-actions"><select data-ingredient-picker>${renderInventoryPickerOptions()}</select><button class="secondary small" data-add-component-ingredient="${c.id}">+ Use selected</button><button class="secondary small" data-add-custom-ingredient="${c.id}">+ Custom</button></div></div>
       <div class="table-wrap"><table><thead><tr><th>Ingredient</th><th>Store</th><th>Amount used</th><th>Unit</th><th>Package size</th><th>Package cost</th><th>Scaled cost</th><th></th></tr></thead><tbody>${c.ingredients.map(i => `<tr data-ingredient-id="${i.id}"><td><input data-ingredient-field="name" value="${escapeHtml(i.name)}" /></td><td><input data-ingredient-field="store" value="${escapeHtml(i.store||'')}" /></td><td><input data-ingredient-field="used" type="number" step="0.01" value="${i.used}" /></td><td><input data-ingredient-field="unit" value="${escapeHtml(i.unit||'')}" /></td><td><input data-ingredient-field="packageAmount" type="number" step="0.01" value="${i.packageAmount}" /></td><td><input data-ingredient-field="packageCost" type="number" step="0.01" value="${i.packageCost}" /></td><td><strong>${currency.format(ingredientCost(i, scale))}</strong></td><td><button class="danger" data-remove-component-ingredient="${c.id}:${i.id}">Remove</button></td></tr>`).join('')}</tbody></table></div>
@@ -180,26 +228,32 @@ function renderSummary() {
 function renderOrders() { const q=$('searchOrders').value.toLowerCase(); const list=state.orders.filter(o=>`${o.name} ${o.customer} ${o.notes}`.toLowerCase().includes(q)); $('ordersList').innerHTML=list.map(o=>`<article class="order-card"><div><h3>${escapeHtml(o.name||'Untitled order')}</h3><div class="order-meta">${escapeHtml(o.customer||'No customer')} · ${new Date(o.createdAt).toLocaleString()}</div><div class="order-numbers"><span class="pill">Revenue ${currency.format(o.price)}</span><span class="pill">Cost ${currency.format(o.totalCost)}</span><span class="pill">Profit ${currency.format(o.profit)}</span><span class="pill">Margin ${percent.format(o.margin)}</span><span class="pill">${o.components?.length||0} components</span></div></div><button class="danger" data-delete-order="${o.id}">Delete</button></article>`).join('') || '<p class="muted">No saved orders yet.</p>'; }
 function renderAll(){ renderRecipes(); renderComponents(); renderOrderLabor(); renderInventory(); renderSummary(); renderOrders(); }
 function saveAll(){ localStorage.setItem(INVENTORY_KEY,JSON.stringify(state.inventory)); localStorage.setItem(TEMPLATES_KEY,JSON.stringify(state.templates)); localStorage.setItem(ORDERS_KEY,JSON.stringify(state.orders)); }
-function loadTemplate(id){ const t=state.templates.find(x=>x.id===id); if(!t)return; $('orderName').value=t.name; $('customerName').value=''; $('quantity').value=t.quantity; $('priceCharged').value=t.targetPrice; state.components=(t.components||[]).map(c=>({ ...structuredClone(c), id: uid(), ingredients:(c.ingredients||[]).map(ingredientFromLine), labor:(c.labor||[]).map(l=>({...l,id:uid()})) })); state.orderLabor=(t.orderLabor||[]).map(l=>({...l,id:uid()})); setExtras(t.extras); setUtilities(t.utilities); renderAll(); }
+function loadTemplate(id){ const t=state.templates.find(x=>x.id===id); if(!t)return; $('orderName').value=t.name; $('customerName').value=''; $('quantity').value=t.quantity; $('priceCharged').value=t.targetPrice; state.components=(t.components||[]).map(c=>({ componentType: c.componentType || 'other', ...structuredClone(c), id: uid(), ingredients:(c.ingredients||[]).map(ingredientFromLine), labor:(c.labor||[]).map(l=>({...l,id:uid()})) })); state.orderLabor=(t.orderLabor||[]).map(l=>({...l,id:uid()})); setExtras(t.extras); setUtilities(t.utilities); renderAll(); }
 function currentTemplate(){ return { id: uid(), name:$('orderName').value.trim()||'Untitled template', quantity:number($('quantity').value), targetPrice:number($('priceCharged').value), components: state.components.map(c=>({ ...c, ingredients:c.ingredients.map(lineFromIngredient), labor:c.labor.map(l=>({task:l.task,type:l.type,minutes:number(l.minutes),qtyBasis:number(l.qtyBasis),hourlyRate:number(l.hourlyRate)})) })), orderLabor: state.orderLabor.map(l=>({task:l.task,type:l.type,minutes:number(l.minutes),qtyBasis:number(l.qtyBasis),hourlyRate:number(l.hourlyRate)})), extras:getExtras(), utilities:getUtilities() }; }
 function saveCurrentTemplate(){ const t=currentTemplate(); const i=state.templates.findIndex(x=>x.name.toLowerCase()===t.name.toLowerCase()); if(i>=0){t.id=state.templates[i].id; state.templates[i]=t}else state.templates.unshift(t); saveAll(); $('saveStatus').textContent='Template saved.'; setTimeout(()=>$('saveStatus').textContent='',1800); renderRecipes(); }
 function saveOrder(){ const t=totals(); const order={ id:uid(), createdAt:new Date().toISOString(), name:$('orderName').value.trim(), customer:$('customerName').value.trim(), price:t.price, quantity:t.quantity, totalCost:t.total, ingredientCost:t.ingredients, laborCost:t.labor, extrasCost:t.extras, utilitiesCost:t.utilities, profit:t.profit, margin:t.margin, components:structuredClone(state.components), orderLabor:structuredClone(state.orderLabor), extras:getExtras(), utilities:getUtilities(), notes:$('notes').value.trim()}; state.orders.unshift(order); saveAll(); $('saveStatus').textContent='Order saved.'; setTimeout(()=>$('saveStatus').textContent='',1800); renderOrders(); }
-function addComponent(){ state.components.push({id:uid(), name:'New component', needed:number($('quantity').value)||1, yieldQty:number($('quantity').value)||1, yieldUnit:'items', rounding:'partial', source:'', ingredients:[], labor:[]}); renderAll(); }
+function addComponent(){ state.components.push({id:uid(), name:'New component', componentType:'cupcake', needed:number($('quantity').value)||1, yieldQty:number($('quantity').value)||1, yieldUnit:'items', rounding:'partial', source:'', ingredients:[], labor:[]}); renderAll(); }
 function escapeHtml(v){ return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 
 document.addEventListener('input', e=>{
   const compEl=e.target.closest('[data-component-id]');
   if(compEl){ const c=state.components.find(x=>x.id===compEl.dataset.componentId); if(!c)return;
     const ingRow=e.target.closest('[data-ingredient-id]'); const labRow=e.target.closest('[data-labor-id]');
-    if(e.target.dataset.componentField){ const f=e.target.dataset.componentField; c[f]=['name','yieldUnit','rounding','source'].includes(f)?e.target.value:number(e.target.value); }
-    else if(ingRow){ const i=c.ingredients.find(x=>x.id===ingRow.dataset.ingredientId); const f=e.target.dataset.ingredientField; i[f]=['name','store','unit'].includes(f)?e.target.value:number(e.target.value); }
-    else if(labRow){ const l=c.labor.find(x=>x.id===labRow.dataset.laborId); const f=e.target.dataset.laborField; l[f]=['task','type'].includes(f)?e.target.value:number(e.target.value); }
-    renderAll(); return;
+    if(e.target.dataset.componentField){ const f=e.target.dataset.componentField; c[f]=isNumericComponentField(f)?e.target.value:e.target.value; }
+    else if(ingRow){ const i=c.ingredients.find(x=>x.id===ingRow.dataset.ingredientId); const f=e.target.dataset.ingredientField; i[f]=['name','store','unit'].includes(f)?e.target.value:e.target.value; }
+    else if(labRow){ const l=c.labor.find(x=>x.id===labRow.dataset.laborId); const f=e.target.dataset.laborField; l[f]=['task','type'].includes(f)?e.target.value:e.target.value; }
+    renderSummary(); return;
   }
-  const invRow=e.target.closest('[data-inventory-id]'); if(invRow){ const i=state.inventory.find(x=>x.id===invRow.dataset.inventoryId); const f=e.target.dataset.inventoryField; i[f]=['name','store','unit'].includes(f)?e.target.value:number(e.target.value); saveAll(); renderAll(); return; }
-  const orderLabRow=e.target.closest('#orderLaborBody [data-labor-id]'); if(orderLabRow){ const l=state.orderLabor.find(x=>x.id===orderLabRow.dataset.laborId); const f=e.target.dataset.laborField; l[f]=['task','type'].includes(f)?e.target.value:number(e.target.value); renderAll(); return; }
+  const invRow=e.target.closest('[data-inventory-id]'); if(invRow){ const i=state.inventory.find(x=>x.id===invRow.dataset.inventoryId); const f=e.target.dataset.inventoryField; i[f]=['name','store','unit'].includes(f)?e.target.value:e.target.value; saveAll(); renderSummary(); return; }
+  const orderLabRow=e.target.closest('#orderLaborBody [data-labor-id]'); if(orderLabRow){ const l=state.orderLabor.find(x=>x.id===orderLabRow.dataset.laborId); const f=e.target.dataset.laborField; l[f]=['task','type'].includes(f)?e.target.value:e.target.value; renderSummary(); return; }
   if(['quantity','priceCharged','packagingCost','deliveryCost','feeCost','otherCost','kitchenRate','kitchenHours','ovenRate','ovenMinutes','fixedOverhead'].includes(e.target.id)) renderSummary();
   if(e.target.id==='searchOrders') renderOrders();
+});
+document.addEventListener('change', e=>{
+  if (e.target.closest('[data-component-id]') || e.target.closest('[data-inventory-id]') || e.target.closest('#orderLaborBody [data-labor-id]')) {
+    saveAll();
+    renderAll();
+  }
 });
 document.addEventListener('click', e=>{
   if(e.target.dataset.loadTemplate) return loadTemplate(e.target.dataset.loadTemplate);
