@@ -167,6 +167,54 @@ const demoTemplates = [
     extras: { packaging: 6, delivery: 0, fee: 0, other: 0 },
     utilities: { kitchenRate: 2.5, kitchenHours: 4, ovenRate: 1.2, ovenMinutes: 45, fixedOverhead: 2 },
   },
+  {
+    id: 'photo-everyday-chocolate-cake',
+    name: 'Everyday chocolate cake from photo recipe',
+    quantity: 1,
+    targetPrice: 110,
+    components: [
+      {
+        id: 'photo-cake-base', name: 'Chocolate cake base — 325°F handwritten bake note', componentType: 'cake', needed: 1, yieldQty: 1, yieldUnit: '3 × 8/9-inch layers', cakeShape: 'round', cakeDiameter: 9, cakeLayers: 3, rounding: 'whole', source: 'Hai photo recipe: Hershey/Nagi everyday chocolate cake; handwritten note says 325°F, 45 min, ~2,290.5g batter / 764g per pan',
+        ingredients: [
+          { inventoryId: 'costco-flour', used: 397.5 },
+          { inventoryId: 'costco-cocoa', used: 82.5 },
+          { inventoryId: 'tj-baking-powder', used: 11 },
+          { inventoryId: 'tj-baking-soda', used: 13.5 },
+          { inventoryId: 'costco-sugar', used: 660 },
+          { inventoryId: 'costco-salt', used: 8.5 },
+          { inventoryId: 'costco-eggs', used: 3 },
+          { inventoryId: 'costco-milk', used: 375 },
+          { inventoryId: 'costco-canola-oil', used: 187.5 },
+          { inventoryId: 'costco-vanilla', used: 12.5 },
+        ],
+        labor: [
+          { id: 'pcl1', task: 'Prep pans + mix one-bowl batter', type: 'fixed', minutes: 25, qtyBasis: 1, hourlyRate: 18 },
+          { id: 'pcl2', task: 'Bake cake layers', type: 'perBatch', minutes: 45, qtyBasis: 1, hourlyRate: 18 },
+          { id: 'pcl3', task: 'Cool layers', type: 'fixed', minutes: 20, qtyBasis: 1, hourlyRate: 18 },
+        ]
+      },
+      {
+        id: 'photo-buttercream', name: 'Chocolate ermine frosting — full photo recipe volume', componentType: 'frosting', needed: 1, yieldQty: 1, yieldUnit: '8/9-inch 2–3 layer cake frosted', rounding: 'whole', source: 'Hai photo recipe: My Secret Less-Sweet Fluffy Vanilla Frosting with chocolate option; used full listed volume with no edits',
+        ingredients: [
+          { inventoryId: 'costco-flour', used: 90 },
+          { inventoryId: 'costco-sugar', used: 400 },
+          { inventoryId: 'costco-milk', used: 500 },
+          { inventoryId: 'costco-vanilla', used: 12.5 },
+          { inventoryId: 'costco-salt', used: 0.5 },
+          { inventoryId: 'costco-butter', used: 450 },
+          { inventoryId: 'costco-cocoa', used: 34 },
+        ],
+        labor: [
+          { id: 'pcl4', task: 'Cook frosting roux', type: 'fixed', minutes: 10, qtyBasis: 1, hourlyRate: 18 },
+          { id: 'pcl5', task: 'Cool roux + whip chocolate ermine frosting', type: 'fixed', minutes: 35, qtyBasis: 1, hourlyRate: 18 },
+          { id: 'pcl6', task: 'Fill, crumb coat, frost', type: 'fixed', minutes: 80, qtyBasis: 1, hourlyRate: 18 },
+        ]
+      },
+    ],
+    orderLabor: [{ id: 'pol1', task: 'Packaging + cleanup', type: 'fixed', minutes: 45, qtyBasis: 1, hourlyRate: 18 }],
+    extras: { packaging: 6, delivery: 0, fee: 0, other: 0 },
+    utilities: { kitchenRate: 2.5, kitchenHours: 4, ovenRate: 1.2, ovenMinutes: 45, fixedOverhead: 2 },
+  },
 ];
 
 const state = {
@@ -176,6 +224,16 @@ const state = {
   components: [],
   orderLabor: [],
 };
+
+// Keep newly added starter templates available without wiping any saved browser data.
+let addedMissingDemoTemplate = false;
+demoTemplates.forEach(template => {
+  if (!state.templates.some(saved => saved.id === template.id)) {
+    state.templates.push(structuredClone(template));
+    addedMissingDemoTemplate = true;
+  }
+});
+if (addedMissingDemoTemplate) localStorage.setItem(TEMPLATES_KEY, JSON.stringify(state.templates));
 
 const $ = (id) => document.getElementById(id);
 const number = (value) => Number.parseFloat(value) || 0;
