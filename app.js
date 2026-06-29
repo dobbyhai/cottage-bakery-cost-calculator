@@ -12,7 +12,6 @@ const demoInventory = [
   { id: 'costco-eggs', store: 'Costco', name: 'Kirkland Signature organic free range eggs', packageAmount: 24, unit: 'each', packageCost: 8.46, source: 'Hai photo 2026-06-06: $7.69 retail + 10% tax' },
   { id: 'costco-vanilla', store: 'Costco', name: 'Kirkland Signature pure vanilla', packageAmount: 473, unit: 'ml', packageCost: 10.55, source: 'Hai photo 2026-06-06: $9.59 retail + 10% tax; 16 fl oz' },
   { id: 'tj-cocoa', store: "Trader Joe's", name: 'Cocoa powder', packageAmount: 255, unit: 'g', packageCost: 3.84, source: 'Hai Trader Joe’s photo 2026-06-28: $3.49 retail + 10% tax; 9 oz' },
-  { id: 'tj-organic-fair-trade-cacao-powder', store: "Trader Joe's", name: 'Organic fair trade cacao powder', packageAmount: 227, unit: 'g', packageCost: 3.84, source: 'Hai Trader Joe’s photo 2026-06-28: $3.49 retail + 10% tax; 8 oz' },
   { id: 'tj-chocolate-chips', store: "Trader Joe's", name: 'Semi-sweet chocolate chips', packageAmount: 340, unit: 'g', packageCost: 4.39, source: 'Hai Trader Joe’s photo 2026-06-28: $3.99 retail + 10% tax; 12 oz' },
   { id: 'tj-chocolate-chunks', store: "Trader Joe's", name: 'Semi-sweet chocolate chunks', packageAmount: 283, unit: 'g', packageCost: 4.39, source: 'Hai Trader Joe’s photo 2026-06-28: $3.99 retail + 10% tax; 10 oz' },
   { id: 'tj-dark-chocolate-chips-72', store: "Trader Joe's", name: '72% cacao dark chocolate chips', packageAmount: 283, unit: 'g', packageCost: 4.72, source: 'Hai Trader Joe’s photo 2026-06-28: $4.29 retail + 10% tax; 10 oz' },
