@@ -7,18 +7,17 @@ const CONFIRMED_INVENTORY_SOURCE_RE = /Hai (?:Trader Joe’s |Costco )?photo|Hai
 
 const demoInventory = [
   // Confirmed prices from Hai photos/notes only, including 10% sales tax where noted.
-  { id: 'costco-flour', store: 'Photo price', name: 'Organic all-purpose flour', packageAmount: 2268, unit: 'g', packageCost: 10.71, source: 'Hai note 2026-06-06: organic flour costs ~50% more than $6.49 photo price; includes 10% tax' },
-  { id: 'costco-sugar', store: 'Photo price', name: 'C&H pure cane granulated sugar', packageAmount: 4536, unit: 'g', packageCost: 8.13, source: 'Hai photo 2026-06-06: $7.39 retail + 10% tax; 10 lb' },
-  { id: 'costco-butter', store: 'Photo price', name: 'Kirkland Signature unsalted butter quarters', packageAmount: 1814, unit: 'g', packageCost: 11.54, source: 'Hai photo 2026-06-06: $10.49 retail + 10% tax; 4 lb' },
+  { id: 'costco-sugar', store: 'Costco', name: 'C&H pure cane granulated sugar', packageAmount: 4536, unit: 'g', packageCost: 8.13, source: 'Hai photo 2026-06-06: $7.39 retail + 10% tax; 10 lb' },
+  { id: 'costco-butter', store: 'Costco', name: 'Kirkland Signature unsalted butter quarters', packageAmount: 1814, unit: 'g', packageCost: 11.54, source: 'Hai photo 2026-06-06: $10.49 retail + 10% tax; 4 lb' },
   { id: 'costco-eggs', store: 'Costco', name: 'Kirkland Signature organic free range eggs', packageAmount: 24, unit: 'each', packageCost: 8.46, source: 'Hai photo 2026-06-06: $7.69 retail + 10% tax' },
-  { id: 'costco-vanilla', store: 'Photo price', name: 'Kirkland Signature pure vanilla', packageAmount: 473, unit: 'ml', packageCost: 10.55, source: 'Hai photo 2026-06-06: $9.59 retail + 10% tax; 16 fl oz' },
+  { id: 'costco-vanilla', store: 'Costco', name: 'Kirkland Signature pure vanilla', packageAmount: 473, unit: 'ml', packageCost: 10.55, source: 'Hai photo 2026-06-06: $9.59 retail + 10% tax; 16 fl oz' },
   { id: 'tj-cocoa', store: "Trader Joe's", name: 'Cocoa powder', packageAmount: 255, unit: 'g', packageCost: 3.84, source: 'Hai Trader Joe’s photo 2026-06-28: $3.49 retail + 10% tax; 9 oz' },
   { id: 'tj-organic-fair-trade-cacao-powder', store: "Trader Joe's", name: 'Organic fair trade cacao powder', packageAmount: 227, unit: 'g', packageCost: 3.84, source: 'Hai Trader Joe’s photo 2026-06-28: $3.49 retail + 10% tax; 8 oz' },
   { id: 'tj-chocolate-chips', store: "Trader Joe's", name: 'Semi-sweet chocolate chips', packageAmount: 340, unit: 'g', packageCost: 4.39, source: 'Hai Trader Joe’s photo 2026-06-28: $3.99 retail + 10% tax; 12 oz' },
   { id: 'tj-chocolate-chunks', store: "Trader Joe's", name: 'Semi-sweet chocolate chunks', packageAmount: 283, unit: 'g', packageCost: 4.39, source: 'Hai Trader Joe’s photo 2026-06-28: $3.99 retail + 10% tax; 10 oz' },
   { id: 'tj-dark-chocolate-chips-72', store: "Trader Joe's", name: '72% cacao dark chocolate chips', packageAmount: 283, unit: 'g', packageCost: 4.72, source: 'Hai Trader Joe’s photo 2026-06-28: $4.29 retail + 10% tax; 10 oz' },
   { id: 'tj-dark-chocolate-chips-no-sugar-added', store: "Trader Joe's", name: 'No sugar added dark chocolate chips', packageAmount: 227, unit: 'g', packageCost: 4.39, source: 'Hai Trader Joe’s photo 2026-06-28: $3.99 retail + 10% tax; 8 oz' },
-  { id: 'costco-milk', store: 'Photo price', name: 'Organic Valley 2% milk', packageAmount: 1893, unit: 'ml', packageCost: 5.49, source: 'Hai photo 2026-06-06: $4.99 retail + 10% tax' },
+  { id: 'costco-milk', store: 'Sprouts', name: 'Organic Valley 2% milk', packageAmount: 1893, unit: 'ml', packageCost: 5.49, source: 'Hai photo 2026-06-06: $4.99 retail + 10% tax' },
   { id: 'costco-greek-yogurt', store: 'Costco', name: 'Organic Green Mountain 2% plain Greek yogurt', packageAmount: 907, unit: 'g', packageCost: 6.59, source: 'Hai photo 2026-06-06: $5.99 retail + 10% tax' },
   { id: 'costco-salt', store: 'Costco', name: 'Kirkland Signature pink salt grinder', packageAmount: 737, unit: 'g', packageCost: 7.69, source: 'Hai photo 2026-06-06: $6.99 retail + 10% tax' },
   { id: 'tj-baking-powder', store: "Trader Joe's", name: 'Baking powder', packageAmount: 230, unit: 'g', packageCost: 2.19, source: 'Hai Trader Joe’s photo 2026-06-28: $1.99 retail + 10% tax; 8.1 oz' },
@@ -28,7 +27,6 @@ const demoInventory = [
   { id: 'photo-kirkland-agave', store: 'Costco', name: 'Kirkland Signature organic blue agave', packageAmount: 2129, unit: 'ml', packageCost: 10.44, source: 'Hai photo 2026-06-06: $9.49 retail + 10% tax; 2 × 36 fl oz' },
   { id: 'photo-nuttzo-mixed-nut-butter', store: 'Costco', name: 'Organic Nuttzo mixed nut seed butter, crunchy', packageAmount: 737, unit: 'g', packageCost: 17.26, source: 'Hai photo 2026-06-06: $15.69 retail + 10% tax; 26 oz' },
   { id: 'photo-kirkland-almond-butter', store: 'Costco', name: 'Kirkland Signature almond butter', packageAmount: 765, unit: 'g', packageCost: 9.12, source: 'Hai photo 2026-06-06: $8.29 retail + 10% tax; 27 oz' },
-  { id: 'photo-kirkland-almond-flour', store: 'Costco', name: 'Kirkland Signature superfine almond flour', packageAmount: 1361, unit: 'g', packageCost: 14.95, source: 'Hai photo 2026-06-06: $13.59 retail + 10% tax; 3 lb' },
   { id: 'costco-volupta-dried-strawberries', store: 'Costco', name: 'Volupta dried strawberries', packageAmount: 142, unit: 'g', packageCost: 10.99, source: 'Hai Costco photo 2026-06-28: $9.99 retail + 10% tax; 5 oz' },
   { id: 'costco-happy-village-dried-strawberries', store: 'Costco', name: 'Organic Happy Village dried strawberries', packageAmount: 510, unit: 'g', packageCost: 18.25, source: 'Hai Costco photo 2026-06-28: $16.59 retail + 10% tax; 18 oz' },
   { id: 'tj-joe-joes-chocolate-vanilla-creme', store: "Trader Joe's", name: 'Joe-Joe’s chocolate vanilla creme sandwich cookies', packageAmount: 380, unit: 'g', packageCost: 3.84, source: 'Hai Trader Joe’s photo 2026-06-28: $3.49 retail + 10% tax; 13.4 oz' },
@@ -167,7 +165,8 @@ const state = {
 
 // Keep the inventory list limited to Hai-confirmed photos/notes.
 // This also cleans older browser-saved demo data that included guess/online-estimate placeholders.
-state.inventory = state.inventory.filter(item => CONFIRMED_INVENTORY_SOURCE_RE.test(item.source || ''));
+const confirmedInventoryIds = new Set(demoInventory.map(item => item.id));
+state.inventory = state.inventory.filter(item => confirmedInventoryIds.has(item.id) && CONFIRMED_INVENTORY_SOURCE_RE.test(item.source || ''));
 // Re-merge confirmed defaults so browsers with older saved inventory don't end up empty.
 demoInventory.forEach(item => {
   const existing = state.inventory.find(saved => saved.id === item.id);
