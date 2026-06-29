@@ -3,10 +3,13 @@ const percent = new Intl.NumberFormat('en-US', { style: 'percent', maximumFracti
 const ORDERS_KEY = 'bakery-cost-calculator-orders-v3';
 const INVENTORY_KEY = 'bakery-cost-calculator-inventory-v5';
 const TEMPLATES_KEY = 'bakery-cost-calculator-templates-v8';
-const CONFIRMED_INVENTORY_SOURCE_RE = /Hai (?:Trader Joe’s |Costco )?photo|Hai note/;
+const CONFIRMED_INVENTORY_SOURCE_RE = /Hai .*photo|Hai note/;
 
 const demoInventory = [
   // Confirmed prices from Hai photos/notes only, including 10% sales tax where noted.
+  { id: 'sprouts-unbleached-all-purpose-flour', store: 'Sprouts', name: 'Sprouts Unbleached All Purpose Flour', packageAmount: 2268, unit: 'g', packageCost: 4.94, source: 'Hai Sprouts photo 2026-06-29: $4.49 retail + 10% tax; 5 lb' },
+  { id: 'sprouts-bobs-red-mill-unbleached-all-purpose-flour', store: 'Sprouts', name: 'Bob’s Red Mill Unbleached All-Purpose White Flour', packageAmount: 2268, unit: 'g', packageCost: 7.14, source: 'Hai Sprouts photo 2026-06-29: $6.49 retail + 10% tax; 5 lb' },
+  { id: 'sprouts-farmer-direct-bakers-patent-all-purpose-flour', store: 'Sprouts', name: 'Farmer Direct Foods Baker’s Patent All Purpose Flour', packageAmount: 2268, unit: 'g', packageCost: 7.14, source: 'Hai Sprouts photo 2026-06-29: $6.49 retail + 10% tax; 5 lb' },
   { id: 'costco-sugar', store: 'Costco', name: 'C&H pure cane granulated sugar', packageAmount: 4536, unit: 'g', packageCost: 8.13, source: 'Hai photo 2026-06-06: $7.39 retail + 10% tax; 10 lb' },
   { id: 'costco-butter', store: 'Costco', name: 'Kirkland Signature unsalted butter quarters', packageAmount: 1814, unit: 'g', packageCost: 11.54, source: 'Hai photo 2026-06-06: $10.49 retail + 10% tax; 4 lb' },
   { id: 'costco-eggs', store: 'Costco', name: 'Kirkland Signature organic free range eggs', packageAmount: 24, unit: 'each', packageCost: 8.46, source: 'Hai photo 2026-06-06: $7.69 retail + 10% tax' },
