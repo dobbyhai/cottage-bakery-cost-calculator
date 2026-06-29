@@ -168,6 +168,12 @@ const state = {
 // Keep the inventory list limited to Hai-confirmed photos/notes.
 // This also cleans older browser-saved demo data that included guess/online-estimate placeholders.
 state.inventory = state.inventory.filter(item => CONFIRMED_INVENTORY_SOURCE_RE.test(item.source || ''));
+// Re-merge confirmed defaults so browsers with older saved inventory don't end up empty.
+demoInventory.forEach(item => {
+  const existing = state.inventory.find(saved => saved.id === item.id);
+  if (existing) Object.assign(existing, structuredClone(item));
+  else state.inventory.push(structuredClone(item));
+});
 localStorage.setItem(INVENTORY_KEY, JSON.stringify(state.inventory));
 
 // Keep newly added starter templates available without wiping any saved browser data.
